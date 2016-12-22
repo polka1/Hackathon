@@ -1,0 +1,91 @@
+# -*- coding: UTF-8 -*-
+#25609642
+#384327389
+#sudo apt-get install libavbin-dev libavbin0
+#/home/danil/IT/IT-univer/MHW
+#mgp123
+#Max retries exceeded with url: /tracks
+import requests
+#import urllib.request
+import urllib.parse
+import os
+import subprocess
+from queue import Queue
+from threading import Thread
+from time import sleep
+
+SRVER_POLLIN_INTERVAL = 7
+
+
+us_id = 'write_you_id'
+size1=0
+audio_ids = Queue()
+toDownload_urls=[]
+false_audio_ids=[]
+true_audio_ids=[]
+q = Queue()
+
+
+def to_jamspot():
+    while 1:
+        print('Роблю запит на сервер Jamspot')
+        track_ids = requests.get('https://jamspot-server.herokuapp.com/tracks')
+        track_ids= track_ids.json()
+        track_ids = track_ids['tracks']
+        print(track_ids)
+        print('Перебераю айдiхи')    #422934393
+        for i in track_ids:
+            audio_ids.push(i)
+        sleep(SERVER_POLLING_ITERVAL)
+
+def ToVK():
+    for i in audio_ids:
+        temp_name = i
+        print('Роблю запит на сервер VK')
+        #r = requests.get('https://api.vk.com/method/users.get?user_id=%s&access_token=8a88d81810c206ddc80b4b0882ae7c38d58455e29dda9235581a69e1747d4eb332a1a67bfc3462a92f68a'%us_id)
+        q = requests.get('https://api.vk.com/method/audio.getById?audios=%s&version&access_token=8a88d81810c206ddc80b4b0882ae7c38d58455e29dda9235581a69e1747d4eb332a1a67bfc3462a92f68a' % i)
+        print('Отримав request')
+        print('Оброблюю JSON ')
+        q = q.json()
+        print(q)
+        q = q['response']
+        true_audio_ids.append(q)
+        print(q)
+        if len(q) >0:
+            q = q[0]
+            url = q['url']
+            toDownload_urls.append(url)
+        else:
+            false_audio_ids.append(i)
+
+        for i in toDownload_urls:
+
+            print("Починаю завантаження")
+            urllib.request.urlretrieve(i, "%s.mp3" % temp_name)
+            print("Завантаження завершено")
+            print('######################')
+
+            #f = urllib.request.urlopen(url)
+            #data = f.read()
+            #with open("new_trek", "wb") as code:
+            #code.write(data)
+            #os.rename(trek_id,str(i)+'.jpg')
+
+
+
+def Player():
+    print('Програю')
+
+    for i in os.listdir(path="/home/danil/IT/IT-univer/MHW/"):
+        for j in true_audio_ids:
+            if i == j :
+                print(j)
+                subprocess.call('mpg123 /home/danil/IT/IT-univer/MHW/%s.mp3' % final_track_list, shell=True)
+                print('DONE')
+                print('------------------------------------------------------')
+
+if __name__ == '__main__':
+    Thread(target=ToJamspot).start()
+    Thread(target=ToVK).start()
+    Thread(target=Player).start()
+
